@@ -104,6 +104,60 @@ echo osa('ca', 'ac');              // 1
 echo dam_lev('ab', 'ba');          // 1
 ```
 
+## Built-in cost map presets
+
+Two opinionated presets ship under `Zbmowrey\WeightedLevenshtein\Presets\` for the two most common weighted-distance use cases. Both return immutable `CharPairCostMap` instances, so you can layer your own overrides with `withCost()`.
+
+### OCR output (`OcrConfusions`)
+
+```php
+use Zbmowrey\WeightedLevenshtein\Distance;
+use Zbmowrey\WeightedLevenshtein\Presets\OcrConfusions;
+
+$substitute = OcrConfusions::common();              // default cost 0.25
+echo Distance::levenshtein('FOOD', 'F00D', null, null, $substitute);  // 0.5
+echo Distance::levenshtein('Hello', 'He11o', null, null, $substitute); // 0.5
+```
+
+`OcrConfusions::common(float $cost = 0.25)` covers the standard high-confidence digit/letter and letter/letter confusions in both directions:
+`0`↔`O`↔`o`, `1`↔`l`↔`I`↔`i`, `5`↔`S`↔`s`, `8`↔`B`, `2`↔`Z`↔`z`, `6`↔`G`, `6`↔`b`, `9`↔`g`, `9`↔`q`, `c`↔`e`, `n`↔`h`, `u`↔`v`, `m`↔`n`.
+
+Pairs not in the list keep the default cost of 1.0. Layer your domain-specific tweaks with `withCost()`:
+
+```php
+$substitute = OcrConfusions::common()
+    ->withCost('I', '1', 0.05)  // your OCR confuses I and 1 more strongly
+    ->withCost('1', 'I', 0.05);
+```
+
+### Human typos (`QwertyKeyboard`)
+
+```php
+use Zbmowrey\WeightedLevenshtein\Distance;
+use Zbmowrey\WeightedLevenshtein\Presets\QwertyKeyboard;
+
+$substitute = QwertyKeyboard::substituteCosts();
+$transpose  = QwertyKeyboard::transposeCosts();
+
+echo Distance::damerauLevenshtein(
+    'helo',
+    'hwlo',
+    null,
+    null,
+    $substitute,   // w is adjacent to e on the keyboard
+    $transpose,
+);
+// 0.5
+```
+
+Costs are derived from the Euclidean distance between keys on a standard staggered US QWERTY layout. Orthogonal and close-diagonal neighbors get the adjacent cost (default 0.5); one-key-removed pairs get the near cost (default 0.75); everything else stays at 1.0. Both lowercase and uppercase letters are populated. Mixed-case and mixed-shift-state pairs (e.g. `q`/`W`, `Q`/`1`) are left at default — those errors are rare in practice.
+
+Override the thresholds if 0.5/0.75 don't fit your data:
+
+```php
+$strict = QwertyKeyboard::substituteCosts(adjacentCost: 0.2, nearCost: 0.5);
+```
+
 ## API reference
 
 ### `Zbmowrey\WeightedLevenshtein\Distance`
@@ -133,6 +187,19 @@ Immutable per-ordered-pair cost map for substitute/transpose operations.
 | `CharPairCostMap::uniform(float $defaultCost = 1.0): self` | Construct a map where every ordered pair has cost `$defaultCost`. |
 | `withCost(string $from, string $to, float $cost): self` | Return a new map with `$cost` for the ordered pair (`$from`, `$to`). |
 | `cost(string $from, string $to): float` | Look up the cost for the ordered pair. |
+
+### `Zbmowrey\WeightedLevenshtein\Presets\OcrConfusions`
+
+| Method | Description |
+| --- | --- |
+| `OcrConfusions::common(float $cost = 0.25): CharPairCostMap` | Curated OCR confusion substitutions in both directions. |
+
+### `Zbmowrey\WeightedLevenshtein\Presets\QwertyKeyboard`
+
+| Method | Description |
+| --- | --- |
+| `QwertyKeyboard::substituteCosts(float $adjacentCost = 0.5, float $nearCost = 0.75): CharPairCostMap` | Adjacency-weighted substitution cost map for ASCII letters and digits on a US QWERTY layout. |
+| `QwertyKeyboard::transposeCosts(float $adjacentCost = 0.5, float $nearCost = 0.75): CharPairCostMap` | Adjacency-weighted transposition cost map using the same layout. |
 
 ### Free function aliases
 

@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Zbmowrey\WeightedLevenshtein\CharCostMap;
 use Zbmowrey\WeightedLevenshtein\CharPairCostMap;
 use Zbmowrey\WeightedLevenshtein\Distance;
+use Zbmowrey\WeightedLevenshtein\Presets\OcrConfusions;
+use Zbmowrey\WeightedLevenshtein\Presets\QwertyKeyboard;
 
 use function Zbmowrey\WeightedLevenshtein\dam_lev;
 use function Zbmowrey\WeightedLevenshtein\lev;
@@ -82,5 +84,24 @@ final class ReadmeExamplesTest extends TestCase
         self::assertSame(3.0, lev('kitten', 'sitting'));
         self::assertSame(1.0, osa('ca', 'ac'));
         self::assertSame(1.0, dam_lev('ab', 'ba'));
+    }
+
+    #[Test]
+    public function ocrPresetExamples(): void
+    {
+        $substitute = OcrConfusions::common();
+        self::assertSame(0.5, Distance::levenshtein('FOOD', 'F00D', null, null, $substitute));
+        self::assertSame(0.5, Distance::levenshtein('Hello', 'He11o', null, null, $substitute));
+    }
+
+    #[Test]
+    public function qwertyPresetExample(): void
+    {
+        $substitute = QwertyKeyboard::substituteCosts();
+        $transpose = QwertyKeyboard::transposeCosts();
+        self::assertSame(
+            0.5,
+            Distance::damerauLevenshtein('helo', 'hwlo', null, null, $substitute, $transpose),
+        );
     }
 }
