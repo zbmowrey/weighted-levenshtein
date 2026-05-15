@@ -23,36 +23,68 @@ final class OcrConfusions
      * Curated set of high-confidence OCR confusions. Each pair is registered
      * in both directions because OCR confusion is naturally symmetric.
      *
+     * The list is intentionally conservative — only pairs that confuse across
+     * most fonts are included. Font-specific or low-resolution-only confusions
+     * (e.g. 4↔A, 0↔6, n↔u) are intentionally omitted; layer those on with
+     * {@see CharPairCostMap::withCost()} if your input data needs them.
+     *
+     * Multi-character confusions (rn→m, cl→d, vv→w) cannot be expressed in a
+     * single-character substitution map and are documented but skipped.
+     *
      * @var list<array{0: string, 1: string}>
      */
     private const array CONFUSIONS = [
-        // Zero / capital-O / lowercase-o
+        // Zero / O / o
         ['0', 'O'],
         ['0', 'o'],
         ['O', 'o'],
-        // One / lowercase-l / uppercase-I / lowercase-i
+        ['0', 'D'],
+        ['O', 'D'],
+        ['O', 'Q'],
+        // One / l / I / i
         ['1', 'l'],
         ['1', 'I'],
         ['1', 'i'],
         ['l', 'I'],
         ['l', 'i'],
         ['I', 'i'],
-        // Digit / letter visual lookalikes
+        // Seven — continental crossbar-less seven and angular cousins
+        ['1', '7'],
+        ['2', '7'],
+        ['7', 'T'],
+        ['7', 'Z'],
+        ['7', 'z'],
+        // Other digit / digit
+        ['2', 'Z'],
+        ['2', 'z'],
+        ['3', '5'],
+        ['3', '8'],
+        // Other digit / letter
         ['5', 'S'],
         ['5', 's'],
         ['8', 'B'],
-        ['2', 'Z'],
-        ['2', 'z'],
         ['6', 'G'],
         ['6', 'b'],
         ['9', 'g'],
         ['9', 'q'],
-        // Letter / letter visual lookalikes (small)
+        // Letter / letter — lowercase
         ['c', 'e'],
         ['n', 'h'],
         ['u', 'v'],
         ['m', 'n'],
-        ['rn', 'm'], // omitted at runtime — kept here for documentation; see filter below.
+        ['f', 't'],
+        ['r', 'n'],
+        // Letter / letter — uppercase
+        ['C', 'G'],
+        ['E', 'F'],
+        ['M', 'N'],
+        ['P', 'R'],
+        ['U', 'V'],
+        ['V', 'Y'],
+        // Multi-character confusions (documented; skipped at runtime — see filter in common()).
+        ['rn', 'm'],
+        ['cl', 'd'],
+        ['vv', 'w'],
     ];
 
     /**

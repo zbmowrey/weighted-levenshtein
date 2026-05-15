@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] — 2026-05-15
+
+### Changed
+- Expanded `OcrConfusions::common()` to cover a more comprehensive set of high-confidence OCR confusions. New pairs (all bidirectional): `0`↔`D`, `O`↔`D`, `O`↔`Q`, `1`↔`7`, `2`↔`7`, `7`↔`T`, `7`↔`Z`, `7`↔`z`, `3`↔`5`, `3`↔`8`, `f`↔`t`, `r`↔`n`, `C`↔`G`, `E`↔`F`, `M`↔`N`, `P`↔`R`, `U`↔`V`, `V`↔`Y`. The cost parameter and method signature are unchanged.
+
 ## [1.1.0] — 2026-05-15
 
 ### Added

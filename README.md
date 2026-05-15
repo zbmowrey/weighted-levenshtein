@@ -119,8 +119,17 @@ echo Distance::levenshtein('FOOD', 'F00D', null, null, $substitute);  // 0.5
 echo Distance::levenshtein('Hello', 'He11o', null, null, $substitute); // 0.5
 ```
 
-`OcrConfusions::common(float $cost = 0.25)` covers the standard high-confidence digit/letter and letter/letter confusions in both directions:
-`0`↔`O`↔`o`, `1`↔`l`↔`I`↔`i`, `5`↔`S`↔`s`, `8`↔`B`, `2`↔`Z`↔`z`, `6`↔`G`, `6`↔`b`, `9`↔`g`, `9`↔`q`, `c`↔`e`, `n`↔`h`, `u`↔`v`, `m`↔`n`.
+`OcrConfusions::common(float $cost = 0.25)` covers a curated list of high-confidence OCR confusions in both directions. The full set:
+
+- **Zero cluster:** `0`↔`O`↔`o`, `0`↔`D`, `O`↔`D`, `O`↔`Q`
+- **One cluster:** `1`↔`l`↔`I`↔`i` (every pair)
+- **Seven cluster:** `1`↔`7`, `2`↔`7`, `7`↔`T`, `7`↔`Z`↔`z`
+- **Other digit/digit:** `2`↔`Z`↔`z`, `3`↔`5`, `3`↔`8`
+- **Other digit/letter:** `5`↔`S`↔`s`, `8`↔`B`, `6`↔`G`, `6`↔`b`, `9`↔`g`, `9`↔`q`
+- **Lowercase letter pairs:** `c`↔`e`, `n`↔`h`, `u`↔`v`, `m`↔`n`, `f`↔`t`, `r`↔`n`
+- **Uppercase letter pairs:** `C`↔`G`, `E`↔`F`, `M`↔`N`, `P`↔`R`, `U`↔`V`, `V`↔`Y`
+
+The list is intentionally conservative — only pairs that confuse across most fonts are included. Font-specific or low-resolution-only confusions (e.g. `4`↔`A`, `0`↔`6`, `n`↔`u`) and multi-character confusions (`rn`↔`m`, `cl`↔`d`, `vv`↔`w`) are not registered. Layer them on with `withCost()` if your data needs them.
 
 Pairs not in the list keep the default cost of 1.0. Layer your domain-specific tweaks with `withCost()`:
 

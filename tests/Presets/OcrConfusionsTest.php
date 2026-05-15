@@ -20,11 +20,29 @@ final class OcrConfusionsTest extends TestCase
     public static function symmetricPairsProvider(): iterable
     {
         $pairs = [
+            // Zero / O / o cluster
             ['0', 'O'], ['0', 'o'], ['O', 'o'],
-            ['1', 'l'], ['1', 'I'], ['l', 'I'],
-            ['5', 'S'], ['8', 'B'], ['2', 'Z'],
-            ['6', 'G'], ['9', 'g'], ['9', 'q'],
+            ['0', 'D'], ['O', 'D'], ['O', 'Q'],
+            // One / l / I / i cluster
+            ['1', 'l'], ['1', 'I'], ['1', 'i'],
+            ['l', 'I'], ['l', 'i'], ['I', 'i'],
+            // Seven cluster
+            ['1', '7'], ['2', '7'],
+            ['7', 'T'], ['7', 'Z'], ['7', 'z'],
+            // Other digit / digit
+            ['2', 'Z'], ['2', 'z'],
+            ['3', '5'], ['3', '8'],
+            // Other digit / letter
+            ['5', 'S'], ['5', 's'],
+            ['8', 'B'],
+            ['6', 'G'], ['6', 'b'],
+            ['9', 'g'], ['9', 'q'],
+            // Letter / letter — lowercase
             ['c', 'e'], ['n', 'h'], ['u', 'v'], ['m', 'n'],
+            ['f', 't'], ['r', 'n'],
+            // Letter / letter — uppercase
+            ['C', 'G'], ['E', 'F'], ['M', 'N'],
+            ['P', 'R'], ['U', 'V'], ['V', 'Y'],
         ];
         foreach ($pairs as [$a, $b]) {
             yield "{$a} <-> {$b}" => [$a, $b];
@@ -50,7 +68,22 @@ final class OcrConfusionsTest extends TestCase
         $map = OcrConfusions::common(0.25);
         // 'A' and 'Z' are not visually confused and remain at default 1.0.
         self::assertSame(1.0, Distance::levenshtein('A', 'Z', null, null, $map));
-        self::assertSame(1.0, Distance::levenshtein('K', 'Q', null, null, $map));
+        self::assertSame(1.0, Distance::levenshtein('K', 'X', null, null, $map));
+    }
+
+    #[Test]
+    public function multiCharacterConfusionsAreNotRegistered(): void
+    {
+        // 'rn' -> 'm', 'cl' -> 'd', 'vv' -> 'w' are real OCR confusions but
+        // cannot be expressed in a CharPairCostMap and must be skipped at
+        // runtime. The constructor must not raise on multi-byte entries in
+        // the constant.
+        $map = OcrConfusions::common(0.25);
+        // Single-character costs from the multi-char entries should not have
+        // leaked in: 'r' -> 'm' was never declared, stays at default 1.0.
+        self::assertSame(1.0, Distance::levenshtein('r', 'm', null, null, $map));
+        self::assertSame(1.0, Distance::levenshtein('c', 'd', null, null, $map));
+        self::assertSame(1.0, Distance::levenshtein('v', 'w', null, null, $map));
     }
 
     #[Test]
